@@ -10,14 +10,19 @@ import {
 import InfoBox from "./InfoBox";
 import Map from "./Map";
 import Table from "./Table";
-import { sortData } from "./util";
+import { sortData,prettyPrintStat } from "./util";
 import LineGraph from './LineGraph';
+import "leaflet/dist/leaflet.css";
 
 function App() {
   const [counteries, setCounteries] = useState([]);
   const [country, setCountry] = useState("Worldwide");
   const [countryInfo, setcountryInfo] = useState({});
   const [tableData, settableData] = useState([]);
+  const [mapCenter, setMapCenter] = useState({ lat: 34.80746, lng: -40.4796 });
+  const [mapZoom, setmapZoom] = useState(3);
+  const [mapCountries, setmapCountries] = useState([]);
+  const [casesType, setcasesType] = useState("cases")
 
   useEffect(() => {
     fetch("https://corona.lmao.ninja/v3/covid-19/all")
@@ -41,6 +46,7 @@ function App() {
           const sortedData = sortData(data);
           setCounteries(counteries);
           settableData(sortedData)
+          setmapCountries(data);
         });
     };
     getCounteriesData();
@@ -58,6 +64,9 @@ function App() {
       .then((data) => {
         setcountryInfo(data);
         setCountry(countryCode);
+        // coming from the Data Json
+        setMapCenter([data.countryInfo.lat,data.countryInfo.long]);
+        setmapZoom(4);
       });
   };
 
@@ -85,24 +94,24 @@ function App() {
         <div className="app_stats">
           <InfoBox
             title="CoronaVirus Cases"
-            total={countryInfo.cases}
+            total={prettyPrintStat(countryInfo.cases)}
             cases={countryInfo.todayCases}
           />
 
           <InfoBox
             title="Recovered"
-            total={countryInfo.recovered}
+            total={prettyPrintStat(countryInfo.recovered)}
             cases={countryInfo.todayRecovered}
           />
 
           <InfoBox
             title="Deaths"
-            total={countryInfo.deaths}
+            total={prettyPrintStat(countryInfo.deaths)}
             cases={countryInfo.todayDeaths}
           />
         </div>
 
-        <Map />
+        <Map countries={mapCountries} center={mapCenter} zoom={mapZoom}/>
       </div>
       <div>
         <Card className="app_right">
@@ -110,7 +119,7 @@ function App() {
             <h2>Live Cases by country</h2>
             <Table countries={tableData}/>
             <h3>WorldWide new cases</h3>
-            <LineGraph/>
+            <LineGraph casesType="cases"/>
           </CardContent>
         </Card>
       </div>
